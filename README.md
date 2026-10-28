@@ -4,7 +4,7 @@ Peter · Reading & Writing Chapter 3. A colourful, tap-friendly practice game fo
 
 Theme: **natural disasters** and **We can make a difference!**
 
-English for the exercises. Traditional Chinese for buttons, help, and short feedback.
+Vocabulary and verb questions are Traditional Chinese. Vocabulary answers stay a picture plus the English word. Past-verb answers stay in English. Reading passages, diary text, and English answer keys stay in English. Buttons, help, section instructions, and feedback are Traditional Chinese.
 
 ## Play online
 
