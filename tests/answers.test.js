@@ -126,6 +126,38 @@ assert(answers.includes("The typhoon had damaged the power cables, so there was 
 assert(answers.includes("It was too dangerous to swim, so Jason stayed inside."), "not swimming");
 assert(answers.includes("jet plane"), "tsunami speed");
 
+const vocab = content.modules.find((mod) => mod.id === "vocab");
+const iconHunt = vocab.steps.find((step) => step.kind === "iconHunt");
+assert(iconHunt.title === "點選圖片", "icon hunt prompt title");
+iconHunt.items.forEach((item) => {
+  assert(item.say === content.gloss[item.answer], `Chinese prompt for ${item.answer}`);
+  assert(/^[a-z]+$/.test(item.answer), `lowercase English answer ${item.answer}`);
+});
+const problemHunt = vocab.steps.find((step) => step.kind === "problemHunt");
+problemHunt.items.forEach((item) => {
+  assert(/[\u4e00-\u9fff]/.test(item.q), `Chinese problem ${item.answer}`);
+  assert(!/[A-Za-z]{4,}/.test(item.q), `problem prompt stays Chinese ${item.answer}`);
+});
+
+const verbMcqs = content.modules.find((mod) => mod.id === "verbs").steps.filter((step) => step.kind === "mcq");
+verbMcqs.forEach((step) => {
+  assert(step.q.includes("過去式"), `verb question Chinese: ${step.q}`);
+  step.options.forEach((option) => assert(/^[a-z ]+$/.test(option), `English verb option ${option}`));
+});
+
+const readingQs = content.modules.find((mod) => mod.id === "reading").steps.filter((step) => step.kind === "mcq");
+assert(readingQs.some((step) => step.q === "龍捲風是強力的 ______，而且移動得很快。" && step.answer === "winds"), "reading stem Chinese, answer English");
+assert(readingQs.every((step) => /[\u4e00-\u9fff]/.test(step.q)), "reading questions Chinese");
+assert(readingQs.every((step) => step.options.includes(step.answer)), "reading options keep English answers");
+assert(readingQs.every((step) => /[\u4e00-\u9fff]/.test(step.why)), "reading feedback Chinese");
+
+const diary = content.modules.find((mod) => mod.id === "diary");
+const diaryText = JSON.stringify(diary.steps.find((step) => step.kind === "read"));
+assert(diaryText.includes("We spent today at the beach"), "diary passage stays English");
+assert(diary.steps.filter((step) => step.kind === "mcq").every((step) => /[\u4e00-\u9fff]/.test(step.q) && /[\u4e00-\u9fff]/.test(step.why)), "diary questions and feedback Chinese");
+assert(diary.steps.find((step) => step.kind === "mcq").options[0].includes("Jason"), "diary answer choices stay English");
+assert(diary.steps.find((step) => step.kind === "bank").items.every((item) => /^[a-z]+$/.test(item.answer)), "diary cloze answers English");
+
 const readingText = JSON.stringify(content.modules.find((mod) => mod.id === "reading").steps);
 ["483", "1,200", "Tamu Massif", "1,200°C", "ten minutes", "75,000", "25 metres"].forEach((bit) => {
   assert(readingText.includes(bit), `passage missing ${bit}`);

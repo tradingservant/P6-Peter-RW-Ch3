@@ -66,6 +66,14 @@
     }
   }
 
+  function hasZh(text) {
+    return /[\u4e00-\u9fff]/.test(String(text || ""));
+  }
+
+  function langAttr(text) {
+    return hasZh(text) ? ` lang="zh-Hant"` : "";
+  }
+
   function esc(value) {
     return String(value).replace(/[&<>"']/g, (ch) => ({
       "&": "&amp;",
@@ -255,6 +263,7 @@
     const node = document.getElementById("feedback");
     if (!node) return;
     node.className = `feedback ${ok ? "good" : "bad"}`;
+    node.lang = hasZh(text) ? "zh-Hant" : "en";
     node.textContent = text;
   }
 
@@ -309,7 +318,7 @@
       <h2>${esc(content.title)}</h2>
       <p>${esc(content.subtitle)}</p>
       <p class="motto">${esc(content.motto)}</p>
-      <p class="hero-note">五關小遊戲：詞彙、動詞、since、百科閱讀、颱風日記。句子是英文，按鈕是中文。</p>
+      <p class="hero-note">五關小遊戲：詞彙、動詞、since、百科閱讀、颱風日記。題目用中文；詞彙答案是圖像加英文。閱讀和日記的英文要自己讀。</p>
       <div class="mascot-row">${minis}</div>
     </section>
     <div class="map">${cards}</div>
@@ -334,7 +343,7 @@
       ${canLook ? `<button class="text-btn" data-action="passage">${state.showPassage ? "收起文章" : "看文章"}</button>` : ""}</div>
       ${help}${passage}
       ${renderStep(step)}
-      <p id="feedback" class="feedback ${note ? (note.ok ? "good" : "bad") : ""}" aria-live="polite">${note ? esc(note.text) : ""}</p>
+      <p id="feedback" class="feedback ${note ? (note.ok ? "good" : "bad") : ""}"${note ? langAttr(note.text) : ""} aria-live="polite">${note ? esc(note.text) : ""}</p>
     </div>${step.kind === "bank" ? bankHtml(step) : ""}`;
   }
 
@@ -361,11 +370,12 @@
       body += `<table class="pair-table">${step.pairs.map(([base, past]) => `<tr><td>${esc(base)}</td><td>→ ${esc(past)}</td></tr>`).join("")}</table>`;
     }
     const last = state.step + 1 >= currentModule().steps.length;
-    return `<section class="panel"><p class="kicker">學一學</p><h2 class="step-title">${esc(step.title || "Learn")}</h2>${body}<button class="big-go" data-action="next">${last ? "完成" : "開始"}</button></section>`;
+    return `<section class="panel"><p class="kicker">學一學</p><h2 class="step-title"${langAttr(step.title)}>${esc(step.title || "學一學")}</h2>${body}<button class="big-go" data-action="next">${last ? "完成" : "開始"}</button></section>`;
   }
 
   function readHtml(step) {
-    return `<section class="panel"><p class="kicker">${esc(step.title)}</p><h2 class="step-title">${esc(step.section)}</h2><div class="passage">${passageHtml(step)}</div><button class="big-go" data-action="next">我讀好了</button></section>`;
+    const note = step.note ? `<p lang="zh-Hant">${esc(step.note)}</p>` : "";
+    return `<section class="panel"><p class="kicker">${esc(step.title)}</p><h2 class="step-title">${esc(step.section)}</h2>${note}<div class="passage">${passageHtml(step)}</div><button class="big-go" data-action="next">我讀好了</button></section>`;
   }
 
   function passageHtml(step) {
@@ -382,27 +392,29 @@
       const off = state.play.disabled[option] ? "disabled" : "";
       return `<button class="choice" data-action="mcq" data-option="${esc(option)}" ${off}>${esc(option)}</button>`;
     }).join("");
-    const why = state.play.revealed ? `<div class="why">${esc(step.why || "")}</div><button class="big-go" data-action="next">下一題</button>` : "";
-    return `<section class="panel"><p class="kicker">選擇題</p><h2 class="step-title">${esc(step.q)}</h2><div class="choices">${buttons}</div>${why}</section>`;
+    const why = state.play.revealed ? `<div class="why"${langAttr(step.why)}>${esc(step.why || "")}</div><button class="big-go" data-action="next">下一題</button>` : "";
+    return `<section class="panel"><p class="kicker">選擇題</p><h2 class="step-title"${langAttr(step.q)}>${esc(step.q)}</h2><div class="choices">${buttons}</div>${why}</section>`;
   }
 
   function iconHuntHtml(step) {
     const item = step.items[state.play.order[state.play.i]];
     const buttons = Object.keys(content.gloss).map((name) => `<button class="icon-pick" data-action="hunt" data-id="${esc(name)}">${ICONS[name]}<strong>${esc(name)}</strong></button>`).join("");
-    return `<section class="panel"><p class="kicker">${esc(step.title)} · ${state.play.i + 1}/${step.items.length}</p><p class="prompt-word">${esc(item.say)}</p><div class="icon-grid">${buttons}</div></section>`;
+    return `<section class="panel"><p class="kicker">${esc(step.title)} · ${state.play.i + 1}/${step.items.length}</p><p class="prompt-word" lang="zh-Hant">${esc(item.say)}</p><div class="icon-grid">${buttons}</div></section>`;
   }
 
   function problemHtml(step) {
     const item = step.items[state.play.order[state.play.i]];
     const buttons = ["tsunami", "drought", "earthquake", "typhoon", "flood", "landslides", "tornado", "volcano", "lava"].map((name) => `<button class="icon-pick" data-action="problem" data-id="${esc(name)}">${ICONS[name]}<strong>${esc(name)}</strong></button>`).join("");
-    return `<section class="panel"><p class="kicker">${esc(step.title)} · ${state.play.i + 1}/${step.items.length}</p><h2 class="step-title">${esc(item.q)}</h2><div class="icon-grid">${buttons}</div></section>`;
+    const intro = step.intro ? `<p lang="zh-Hant">${esc(step.intro)}</p>` : "";
+    return `<section class="panel"><p class="kicker">${esc(step.title)} · ${state.play.i + 1}/${step.items.length}</p>${intro}<h2 class="step-title" lang="zh-Hant">${esc(item.q)}</h2><div class="icon-grid">${buttons}</div></section>`;
   }
 
   function sceneHtml(step) {
     const scene = step.scenes[state.play.order[state.play.i]];
     const buttons = step.choices.map((choice) => `<button class="choice" data-action="scene" data-id="${esc(choice.id)}">${esc(choice.label)}</button>`).join("");
     const full = state.play.revealed ? `<div class="why"><strong>${esc(scene.answer)}.</strong> ${esc(step.sentences[scene.answer])}</div><button class="big-go" data-action="next-scene">繼續</button>` : "";
-    return `<section class="panel"><p class="kicker">${esc(step.title)} · ${state.play.i + 1}/${step.scenes.length}</p><div class="scene-art">${SCENES[scene.scene]}</div><div class="choices">${buttons}</div>${full}</section>`;
+    const intro = step.intro ? `<p lang="zh-Hant">${esc(step.intro)}</p>` : "";
+    return `<section class="panel"><p class="kicker">${esc(step.title)} · ${state.play.i + 1}/${step.scenes.length}</p>${intro}<div class="scene-art">${SCENES[scene.scene]}</div><div class="choices">${buttons}</div>${full}</section>`;
   }
 
   function bankStoryHtml(step) {
@@ -444,9 +456,9 @@
       : "";
     return `<section class="panel"><p class="kicker">${esc(step.kicker || "since")} · ${state.play.i + 1}/${step.items.length}</p><h2 class="step-title">${esc(step.title)}</h2><p>${esc(step.lead || "")}</p>
       <div class="builder-card"><p class="kicker">${esc(item.label)}</p><div class="scene-art">${SCENES[item.scene] || ""}</div>
-        <button type="button" class="blank ${result ? "is-locked" : "is-armed"}" data-action="slot" data-slot="${esc(item.id)}:result"><span class="slot-label">結果 result</span>${esc(result || "tap a phrase")}</button>
+        <button type="button" class="blank ${result ? "is-locked" : "is-armed"}" data-action="slot" data-slot="${esc(item.id)}:result"><span class="slot-label">結果</span>${esc(result || "點選片語")}</button>
         <span class="since-word">since</span>
-        <button type="button" class="blank ${reason ? "is-locked" : "is-armed"}" data-action="slot" data-slot="${esc(item.id)}:reason"><span class="slot-label">原因 reason</span>${esc(reason || "tap a phrase")}</button>
+        <button type="button" class="blank ${reason ? "is-locked" : "is-armed"}" data-action="slot" data-slot="${esc(item.id)}:reason"><span class="slot-label">原因</span>${esc(reason || "點選片語")}</button>
       </div>
       <div class="bank-tray">${chips}</div>
       ${ready && !state.play.revealed ? `<button class="big-go" data-action="check-builder">檢查</button>` : ""}
@@ -541,7 +553,8 @@
       button.classList.add("is-wrong");
       buzz();
       const gloss = content.gloss[answer];
-      feedback(false, state.play.tries[key] >= 2 && gloss ? `提示：${gloss}` : "再看看圖。");
+      const promptIsGloss = kind === "icon" && gloss && item.say === gloss;
+      feedback(false, state.play.tries[key] >= 2 && gloss && !promptIsGloss ? `提示：${gloss}` : "再看看圖。");
       setTimeout(() => button.classList.remove("is-wrong"), 350);
     }
   }
@@ -553,7 +566,8 @@
     if (id === scene.answer) {
       const key = `scene:${state.play.order[state.play.i]}`;
       const first = !state.play.tries[key];
-      record(first, `Picture ${scene.scene}`, scene.answer, step.sentences[scene.answer]);
+      const sceneName = content.gloss[scene.scene] || scene.scene;
+      record(first, `圖片：${sceneName}`, scene.answer, step.sentences[scene.answer]);
       state.play.revealed = true;
       render(false);
       feedback(true, scene.answer === "E" && (scene.scene === "flood" || scene.scene === "landslides") ? "E 有兩張圖，洪水和山泥傾瀉都是 E。" : "配對正確！");
